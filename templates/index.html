@@ -1,0 +1,2544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>PyOlympiad | Kakatiya Olympiad School</title>
+<link rel="icon" href="https://i.ibb.co/j9JrF3R5/Vibrant-Gradient-Ribbon-M-Logo.png">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --green: #10a37f;
+    --green-dark: #0b8f70;
+    --blue: #3776ab;
+    --background: #f6f7f9;
+    --white: #ffffff;
+    --border: #e5e7eb;
+    --border-light: #eeeeee;
+    --text: #202124;
+    --muted: #9ca3af;
+    --error: #dc2626;
+    --editor-background: #ffffff;
+    --console-background: #fbfbfc;
+    --header-height: 58px;
+    --panel-header: 43px;
+    --splitter: 10px;
+    --code-font: 14px;
+    --code-lh: 22px;
+}
+
+html, body { height: 100%; }
+
+body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--background);
+    color: var(--text);
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    -webkit-text-size-adjust: 100%;
+}
+body.dragging { user-select: none; -webkit-user-select: none; }
+body.dragging.col { cursor: col-resize; }
+body.dragging.row { cursor: row-resize; }
+
+/* ================= HEADER ================= */
+.topbar {
+    height: var(--header-height);
+    flex-shrink: 0;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px;
+    gap: 10px;
+    position: relative; z-index: 10;
+}
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-logo {
+    width: 40px; height: 40px; flex-shrink: 0;
+    object-fit: contain;
+    background: none; border: none; border-radius: 0;
+    display: block;
+}
+.brand-info { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.brand-name { font-size: 16px; font-weight: 650; color: #202124; white-space: nowrap; }
+.brand-subtitle { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.header-back-button {
+    display: none;
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: #374151;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+.header-back-button svg { width: 22px; height: 22px; }
+.header-back-button:hover { background: #f0f0f0; }
+
+.language {
+    height: 34px; padding: 0 12px;
+    border: 1px solid var(--border); border-radius: 7px; background: white;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 12px; color: #4b5563; white-space: nowrap;
+}
+.python-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+
+.run-controls { display: flex; align-items: center; }
+.run-icon { line-height: 1; }
+
+.run-button, .stop-button {
+    height: 36px; border: none; border-radius: 7px; color: white;
+    padding: 0 17px; font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+    transition: 0.15s ease;
+}
+.run-button { background: var(--green); }
+.run-button:hover { background: var(--green-dark); }
+.run-button:disabled { opacity: 0.65; cursor: not-allowed; }
+.stop-button { background: #ef4444; display: none; }
+.stop-button:hover { background: #dc2626; }
+.stop-button.visible { display: flex; }
+.run-button.hidden { display: none; }
+
+button:focus-visible, .splitter:focus-visible, .error-link:focus-visible {
+    outline: 2px solid var(--green);
+    outline-offset: 2px;
+}
+
+/* ================= WORKSPACE ================= */
+.workspace {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: row;
+    overflow: hidden;
+}
+
+/* ================= EDITOR ================= */
+.editor-section {
+    flex: 1 1 0;
+    min-width: 0; min-height: 0;
+    background: var(--editor-background);
+    display: flex; flex-direction: column;
+}
+/* Multi-file editor tabs */
+.file-tabs {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    min-height: 39px;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+.file-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 7px 7px 0 0;
+    background: #f7f7f8;
+    color: #4b5563;
+    padding: 7px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 13px;
+}
+.file-tab.active {
+    background: var(--surface);
+    color: #111827;
+    font-weight: 600;
+}
+.file-tab-add {
+    min-width: 34px;
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 600;
+}
+.file-tab-close {
+    border: 0;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 1px 2px;
+    border-radius: 4px;
+}
+.file-tab-close:hover { background: #e5e7eb; color: #374151; }
+.editor-toolbar {
+    height: var(--panel-header); flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 13px; gap: 10px;
+    position: relative;
+}
+.file-name { display: none; }
+.toolbar-buttons {
+    display: flex; gap: 7px; min-width: 0;
+    padding-right: 48px;
+    overflow: visible;
+    scrollbar-width: none;
+}
+.toolbar-buttons::-webkit-scrollbar { display: none; }
+.toolbar-buttons > * { flex-shrink: 0; }
+
+.tool-button {
+    height: 29px; border: 1px solid var(--border); border-radius: 6px;
+    background: white; padding: 0 10px; font-size: 12px; color: #6b7280;
+    cursor: pointer; transition: 0.15s; white-space: nowrap;
+    font-family: inherit;
+}
+.tool-button:hover { background: #f7f7f8; color: #374151; }
+
+.editor-menu { position: absolute; right: 13px; top: 50%; transform: translateY(-50%); flex-shrink: 0; z-index: 20; }
+.menu-button { min-width: 38px; padding: 0 9px; font-size: 17px; line-height: 1; }
+.editor-menu-panel {
+    display: none; position: absolute; top: calc(100% + 7px); right: 0; z-index: 1000;
+    width: 190px; padding: 6px; background: #fff; border: 1px solid var(--border);
+    border-radius: 9px; box-shadow: 0 8px 24px rgba(0,0,0,.14);
+}
+.editor-menu-panel.open { display: block; }
+.menu-item {
+    width: 100%; border: 0; border-radius: 6px; background: transparent; padding: 9px 10px;
+    text-align: left; font: inherit; font-size: 12px; color: #374151; cursor: pointer;
+}
+.menu-item:hover { background: #f3f4f6; }
+.menu-reset { color: #b91c1c; }
+.menu-reset:hover { background: #fef2f2; }
+.menu-divider { height: 1px; margin: 5px 2px; background: var(--border); }
+.menu-label { padding: 5px 10px 3px; font-size: 11px; color: #9ca3af; }
+.menu-font-buttons { display: flex; gap: 4px; }
+.menu-font { flex: 1; font-size: 11px; }
+.hidden-control { display: none !important; }
+.font-buttons { display: flex; gap: 4px; }
+.font-buttons .tool-button { width: 30px; padding: 0; font-weight: 600; }
+.lbl-short { display: none; }
+
+.editor-container { flex: 1; min-height: 0; overflow: hidden; position: relative; }
+.editor {
+    position: absolute; inset: 0;
+    display: flex; overflow: hidden;
+    font-family: "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: var(--code-font); line-height: var(--code-lh);
+}
+.line-numbers {
+    width: 54px; flex-shrink: 0; padding-top: 14px;
+    background: #fafafa; border-right: 1px solid #eeeeee;
+    color: #9ca3af; text-align: right; padding-right: 13px; padding-bottom: 14px;
+    user-select: none; overflow: hidden;
+}
+.line-number { height: var(--code-lh); font-size: calc(var(--code-font) - 1px); }
+.line-number.current { color: #374151; font-weight: 600; }
+.line-number.error { color: var(--error); font-weight: 700; }
+.line-number.error::before { content: "● "; font-size: 8px; vertical-align: middle; }
+
+.code-area { flex: 1; min-width: 0; position: relative; }
+
+#highlightLayer,
+#codeEditor {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    margin: 0;
+    padding: 14px 18px;
+    border: none; outline: none;
+    font-family: "Fira Code", "Cascadia Code", Consolas, "Courier New", monospace;
+    font-size: var(--code-font);
+    line-height: var(--code-lh);
+    letter-spacing: normal;
+    tab-size: 4;
+    white-space: pre;
+    word-wrap: normal;
+    overflow: auto;
+}
+#highlightLayer {
+    background: white;
+    color: #1f2937;
+    pointer-events: none;
+    scrollbar-width: none;
+}
+#highlightLayer::-webkit-scrollbar { display: none; }
+#highlightLayer code {
+    font: inherit; background: none; padding: 0; margin: 0;
+    white-space: inherit; display: block; text-shadow: none;
+}
+#codeEditor {
+    resize: none;
+    background: transparent;
+    color: transparent;
+    caret-color: #111827;
+}
+#codeEditor::selection { background: rgba(16, 163, 127, 0.22); }
+#codeEditor::placeholder { color: #b4b8bd; }
+
+/* Editor helpers */
+.editor-search {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    z-index: 15;
+    align-items: center;
+    gap: 5px;
+    padding: 5px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 5px 18px rgba(0,0,0,.12);
+}
+.editor-search.open { display: flex; }
+.editor-search input {
+    width: 180px; height: 28px;
+    border: 1px solid #d8dce1; border-radius: 5px;
+    outline: none; padding: 0 8px;
+    font: 12px Inter, Arial, sans-serif; color: #202124;
+}
+.editor-search input:focus { border-color: var(--green); box-shadow: 0 0 0 2px rgba(16,163,127,.10); }
+.editor-search button {
+    width: 28px; height: 28px; border: 1px solid var(--border);
+    border-radius: 5px; background: #fff; color: #6b7280; cursor: pointer;
+}
+.editor-search button:hover { background: #f7f7f8; color: #374151; }
+.search-count { min-width: 38px; text-align: center; font-size: 10px; color: #9ca3af; }
+.token.comment                       { color: #8b949e; font-style: italic; }
+.token.string, .token.triple-quoted-string,
+.token.char                          { color: #0a7d5a; }
+.token.number, .token.boolean        { color: #c2410c; }
+.token.keyword                       { color: #7c3aed; font-weight: 500; }
+.token.builtin, .token.class-name    { color: #0369a1; }
+.token.function                      { color: #2563eb; }
+.token.decorator, .token.annotation  { color: #b45309; }
+.token.operator, .token.punctuation  { color: #4b5563; }
+.token.interpolation .token.interpolation-punctuation { color: #c2410c; }
+
+/* Show operators exactly as typed (>= stays >=, not a single "≥" ligature) */
+.editor, #highlightLayer, #highlightLayer code, #codeEditor, .output-console, .input-field, .input-prompt {
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "calt" 0, "clig" 0;
+    -webkit-font-feature-settings: "liga" 0, "calt" 0, "clig" 0;
+}
+
+.editor-status {
+    height: 30px; flex-shrink: 0;
+    border-top: 1px solid var(--border); background: white;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px; color: #8a8f98; font-size: 11px; gap: 10px;
+    white-space: nowrap; overflow: hidden;
+}
+.status-group { display: flex; align-items: center; gap: 12px; }
+
+/* ================= SPLITTER ================= */
+.splitter {
+    flex: 0 0 var(--splitter);
+    background: var(--border-light);
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    cursor: col-resize;
+    position: relative;
+    touch-action: none;
+    z-index: 5;
+    transition: background 0.15s;
+}
+.splitter::before { content: ""; position: absolute; inset: 0 -7px; }
+.splitter::after {
+    content: ""; position: absolute; top: 50%; left: 50%;
+    width: 3px; height: 28px;
+    transform: translate(-50%, -50%);
+    border-radius: 2px; background: #c4c9d0;
+}
+.splitter:hover, .splitter.active { background: rgba(16, 163, 127, 0.18); }
+.splitter:hover::after, .splitter.active::after { background: var(--green); }
+
+/* ================= RIGHT SECTION (SHELL) ================= */
+.right-section {
+    flex: 0 0 38%;
+    min-width: 0; min-height: 0;
+    background: var(--console-background);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+
+.input-section {
+    display: none; background: white;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+    max-height: 50%;
+    flex-direction: column;
+}
+.input-section.visible { display: flex; }
+.input-header {
+    height: 42px; flex-shrink: 0;
+    border-bottom: 1px solid var(--border-light);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px;
+}
+.input-header-right { display: flex; align-items: center; gap: 10px; }
+.input-title { font-size: 13px; font-weight: 600; color: #374151; }
+.input-status { font-size: 11px; color: #f59e0b; }
+.input-body { padding: 12px 14px 14px; overflow-y: auto; min-height: 0; }
+.input-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+.input-row:last-child { margin-bottom: 0; }
+.input-prompt {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px; color: #374151; max-width: 55%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.input-history-value {
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px; color: #0a7d5a; /* matches string color */
+    flex: 1; min-width: 80px; height: 32px;
+    display: flex; align-items: center; padding: 0 9px;
+}
+.input-field {
+    flex: 1; min-width: 80px; height: 32px;
+    border: 1px solid #d8dce1; border-radius: 6px; outline: none;
+    padding: 0 9px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 12px; color: #202124; background: white;
+}
+.input-field:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 2px rgba(16, 163, 127, 0.10);
+}
+
+.output-section { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.output-header {
+    height: var(--panel-header); flex-shrink: 0; background: white;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px 0 14px; gap: 8px;
+}
+.output-title { font-size: 13px; font-weight: 600; color: #374151; }
+.output-actions { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.output-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9ca3af; white-space: nowrap; }
+.small-button {
+    height: 26px; border: 1px solid var(--border); border-radius: 5px;
+    background: white; padding: 0 9px; font-size: 11px; color: #6b7280;
+    cursor: pointer; display: none; transition: 0.15s; white-space: nowrap;
+}
+.small-button.visible { display: inline-block; }
+.small-button:hover { background: #f7f7f8; color: #374151; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; }
+.status-dot.ready   { background: #22c55e; }
+.status-dot.running { background: #f59e0b; }
+.status-dot.error   { background: #ef4444; }
+
+.output-console {
+    flex: 1; min-height: 0; overflow: auto; padding: 15px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px; line-height: 21px; color: #374151;
+    white-space: pre-wrap; word-break: break-word;
+}
+.output-placeholder { color: #a1a7af; font-family: Inter, Arial, sans-serif; font-size: 12px; }
+.output-error { color: var(--error); white-space: pre-wrap; }
+.error-link { color: #b91c1c; text-decoration: underline; cursor: pointer; font-weight: 600; }
+.error-link:hover { color: #7f1d1d; }
+
+/* ================= TABLET / MOBILE: DEDICATED SHELL SCREEN ================= */
+@media (max-width: 850px) {
+    .workspace { flex-direction: column; }
+    .editor-section { width: 100%; flex: 1 1 0; min-height: 0; display: flex; }
+    .splitter { display: none; }
+    .right-section { display: none; width: 100%; flex: 1 1 0; background: var(--console-background); }
+    
+    /* Activate Shell View */
+    body.shell-view .header-back-button { display: flex; }
+    body.shell-view .editor-section { display: none; }
+    body.shell-view .right-section { display: flex; flex-direction: column; }
+    body.shell-view .run-controls { display: none; } 
+    
+    .input-section.visible { max-height: 40%; flex-shrink: 0; }
+    .input-body { max-height: 28vh; }
+    .output-section { flex: 1 1 0; min-height: 0; }
+}
+
+/* ================= SMALL PHONES ================= */
+@media (max-width: 600px) {
+    :root { --header-height: 52px; }
+    .topbar { padding: 0 11px; }
+    .brand-subtitle { font-size: 10px; }
+    .brand-name { font-size: 15px; }
+    .brand-logo { width: 34px; height: 34px; }
+    .language { height: 30px; padding: 0 10px; font-size: 11px; }
+    .editor-toolbar { padding: 0 10px; }
+    .editor-menu { right: 10px; }
+    .toolbar-buttons { padding-right: 44px; }
+    .file-tabs { padding: 4px 8px; min-height: 37px; }
+    .font-buttons { display: none; }
+    .lbl-full { display: none; }
+    .lbl-short { display: inline; }
+    .line-numbers { width: 40px; padding-right: 8px; padding-bottom: 96px; }
+    #highlightLayer, #codeEditor { padding: 14px 10px 96px; }   /* room so the last lines scroll above the round button */
+
+    /* Round floating Run / Stop button (bottom-right of the editor) */
+    .editor-section { position: relative; }
+    .run-controls {
+        position: absolute; right: 16px; bottom: 46px; z-index: 20;
+    }
+    .run-button, .stop-button {
+        width: 58px; height: 58px; padding: 0;
+        border-radius: 50%;
+        box-shadow: 0 6px 16px rgba(16, 163, 127, 0.45), 0 2px 5px rgba(0, 0, 0, 0.18);
+    }
+    .stop-button { box-shadow: 0 6px 16px rgba(239, 68, 68, 0.45), 0 2px 5px rgba(0, 0, 0, 0.18); }
+    .run-button #runButtonText, .stop-button .run-label { display: none; }
+    .run-icon { font-size: 22px; }
+    .run-button .run-icon { padding-left: 3px; }   /* optical centring of the triangle */
+    .run-button:active, .stop-button:active { transform: scale(0.93); }
+    .right-section { padding-bottom: env(safe-area-inset-bottom, 0px); }
+    .editor-status .hide-sm { display: none; }
+    .output-console { padding: 12px; }
+    .output-status #statusText { display: none; }
+}
+@media (max-width: 380px) {
+    .brand-name { font-size: 14px; }
+    .brand { gap: 8px; }
+    .tool-button { padding: 0 8px; }
+}
+
+/* ================= SHORT LANDSCAPE SCREENS ================= */
+@media (max-height: 480px) and (max-width: 850px) {
+    :root { --header-height: 46px; --panel-header: 36px; }
+    .editor-status { display: none; }
+}
+
+/* ================= TOUCH DEVICES ================= */
+@media (pointer: coarse) {
+    .input-field { font-size: 16px; height: 38px; }
+    .input-history-value { font-size: 16px; height: 38px; }
+    .tool-button, .small-button { height: 34px; }
+    :root { --splitter: 14px; }
+}
+
+@media (max-width: 600px) and (max-height: 480px) {
+    .run-controls { bottom: 16px; }
+    .run-button, .stop-button { width: 48px; height: 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="brand">
+        <img class="brand-logo" src="https://i.ibb.co/j9JrF3R5/Vibrant-Gradient-Ribbon-M-Logo.png" alt="PyOlympiad logo">
+        <div class="brand-info">
+            <div class="brand-name">PyOlympiad</div>
+            <div class="brand-subtitle">Kakatiya Olympiad School</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <button id="headerBackButton" class="header-back-button" title="Back to editor" aria-label="Back to editor">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="language">
+            <span class="python-dot"></span>
+            Python 3
+        </div>
+        <div class="run-controls" id="runControls">
+            <button class="run-button" id="runButton" title="Run (Ctrl+Enter)" aria-label="Run code">
+                <span class="run-icon">▶</span>
+                <span id="runButtonText">Run</span>
+            </button>
+            <button class="stop-button" id="stopButton" title="Stop" aria-label="Stop running">
+                <span class="run-icon">■</span>
+                <span class="run-label">Stop</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="workspace" id="workspace">
+
+    <section class="editor-section" id="editorSection">
+        <div class="editor-toolbar">
+            <div class="toolbar-buttons">
+                <button class="tool-button" id="openButton" title="Open a Python file" aria-label="Open Python file">Open</button>
+                <button class="tool-button" id="saveAsButton" title="Save Python program" aria-label="Save As">Save As</button>
+                <button class="tool-button" id="undoButton" title="Undo (Ctrl+Z)" aria-label="Undo">Undo</button>
+                <button class="tool-button" id="redoButton" title="Redo (Ctrl+Y)" aria-label="Redo">Redo</button>
+
+                <!-- Existing controls are kept for compatibility with the editor logic. -->
+                <button class="tool-button hidden-control" id="fontDown" title="Smaller text" aria-label="Decrease font size">A−</button>
+                <button class="tool-button hidden-control" id="fontUp" title="Larger text" aria-label="Increase font size">A+</button>
+                <button class="tool-button hidden-control" id="renameButton" title="Rename the current Python program" aria-label="Rename program">Rename</button>
+                <button class="tool-button hidden-control" id="copyCodeButton" title="Copy code">Copy</button>
+                <button class="tool-button hidden-control" id="clearButton" title="Clear the editor (Ctrl+Z to undo)">Clear</button>
+                <button class="tool-button hidden-control" id="resetButton" title="Restore the starter code">Reset</button>
+            </div>
+
+            <div class="editor-menu">
+                <button class="tool-button menu-button" id="menuButton" type="button" title="More editor options" aria-label="More editor options" aria-haspopup="true" aria-expanded="false">☰</button>
+                <div class="editor-menu-panel" id="editorMenuPanel" role="menu">
+                    <button class="menu-item" id="menuRenameButton" type="button" role="menuitem">Rename program</button>
+                    <button class="menu-item" id="menuCopyButton" type="button" role="menuitem">Copy code</button>
+                    <button class="menu-item" id="menuClearButton" type="button" role="menuitem">Clear editor</button>
+                    <button class="menu-item menu-reset" id="menuResetButton" type="button" role="menuitem">Reset to starter code</button>
+                    <div class="menu-divider"></div>
+                    <div class="menu-label">Text size</div>
+                    <div class="menu-font-buttons">
+                        <button class="menu-item menu-font" id="menuFontDown" type="button" role="menuitem">A− &nbsp; Smaller</button>
+                        <button class="menu-item menu-font" id="menuFontUp" type="button" role="menuitem">A+ &nbsp; Larger</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="file-tabs" id="fileTabs" role="tablist" aria-label="Python files"></div>
+
+        <input type="file" id="openFileInput" accept=".py,text/x-python,application/x-python-code" hidden>
+        <div class="editor-container">
+            <div class="editor">
+                <div class="line-numbers" id="lineNumbers"></div>
+                <div class="code-area">
+                    <div class="editor-search" id="editorSearch" role="search" aria-label="Find in code">
+                        <input id="searchInput" type="search" placeholder="Find in code" autocomplete="off" spellcheck="false">
+                        <span class="search-count" id="searchCount">0/0</span>
+                        <button type="button" id="searchPrev" title="Previous match" aria-label="Previous match">↑</button>
+                        <button type="button" id="searchNext" title="Next match" aria-label="Next match">↓</button>
+                        <button type="button" id="searchClose" title="Close search" aria-label="Close search">×</button>
+                    </div>
+                    <pre id="highlightLayer" aria-hidden="true"><code id="highlightCode" class="language-python"></code></pre>
+                    <textarea
+                        id="codeEditor"
+                        spellcheck="false"
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        aria-label="Python code editor"
+                        placeholder="# Write your Python code here..."
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-status">
+            <div class="status-group">
+                <span id="cursorPosition">Ln 1, Col 1</span>
+                <span class="hide-sm">Spaces: 4</span>
+            </div>
+            <div class="status-group">
+                <span id="charCount">0 characters</span>
+                <span class="hide-sm">Python 3</span>
+            </div>
+        </div>
+    </section>
+
+    <div class="splitter" id="splitter"
+         role="separator" tabindex="0"
+         aria-label="Resize output panel"
+         aria-orientation="vertical"
+         title="Drag to resize · Double-click to reset"></div>
+
+    <section class="right-section" id="rightSection">
+        <div class="input-section" id="inputSection">
+            <div class="input-header">
+                <span class="input-title">Program Input</span>
+                <div class="input-header-right">
+                    <span class="input-status" id="inputStatus">Waiting for input</span>
+                </div>
+            </div>
+            <div class="input-body" id="inputBody"></div>
+        </div>
+
+        <div class="output-section">
+            <div class="output-header">
+                <span class="output-title">Shell Output</span>
+                <div class="output-actions">
+                    <button class="small-button" id="copyButton">Copy</button>
+                    <button class="small-button" id="clearOutputButton">Clear</button>
+                    <span class="output-status">
+                        <span class="status-dot ready" id="statusDot"></span>
+                        <span id="statusText">Ready</span>
+                    </span>
+                </div>
+            </div>
+            <div class="output-console" id="outputConsole" role="log" aria-live="polite">
+                <div class="output-placeholder">
+                    Click Run to execute your Python program.
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+<script>
+/* ELEMENTS */
+const root            = document.documentElement;
+const workspace       = document.getElementById("workspace");
+const rightSection    = document.getElementById("rightSection");
+const splitter        = document.getElementById("splitter");
+const codeEditor      = document.getElementById("codeEditor");
+const highlightLayer  = document.getElementById("highlightLayer");
+const highlightCode   = document.getElementById("highlightCode");
+const lineNumbers     = document.getElementById("lineNumbers");
+const runButton       = document.getElementById("runButton");
+const stopButton      = document.getElementById("stopButton");
+const clearButton     = document.getElementById("clearButton");
+const resetButton     = document.getElementById("resetButton");
+const fontDown        = document.getElementById("fontDown");
+const fontUp          = document.getElementById("fontUp");
+const openButton      = document.getElementById("openButton");
+const saveAsButton    = document.getElementById("saveAsButton");
+const renameButton    = document.getElementById("renameButton");
+const undoButton      = document.getElementById("undoButton");
+const redoButton      = document.getElementById("redoButton");
+const openFileInput   = document.getElementById("openFileInput");
+const copyCodeButton  = document.getElementById("copyCodeButton");
+const menuButton      = document.getElementById("menuButton");
+const editorMenuPanel = document.getElementById("editorMenuPanel");
+const menuRenameButton = document.getElementById("menuRenameButton");
+const menuCopyButton   = document.getElementById("menuCopyButton");
+const menuClearButton  = document.getElementById("menuClearButton");
+const menuResetButton  = document.getElementById("menuResetButton");
+const menuFontDown     = document.getElementById("menuFontDown");
+const menuFontUp       = document.getElementById("menuFontUp");
+const fileNameDisplay = document.querySelector(".file-name");
+const inputSection    = document.getElementById("inputSection");
+const inputBody       = document.getElementById("inputBody");
+const inputStatus     = document.getElementById("inputStatus");
+const outputConsole   = document.getElementById("outputConsole");
+const statusDot       = document.getElementById("statusDot");
+const statusText      = document.getElementById("statusText");
+const cursorPosition  = document.getElementById("cursorPosition");
+const charCount       = document.getElementById("charCount");
+const copyButton      = document.getElementById("copyButton");
+const clearOutputBtn  = document.getElementById("clearOutputButton");
+const headerBackBtn   = document.getElementById("headerBackButton");
+const editorSearch    = document.getElementById("editorSearch");
+const searchInput     = document.getElementById("searchInput");
+const searchCount     = document.getElementById("searchCount");
+const searchPrev      = document.getElementById("searchPrev");
+const searchNext      = document.getElementById("searchNext");
+const searchClose     = document.getElementById("searchClose");
+
+const DEFAULT_CODE =
+`name = input("Enter your name: ")
+print("Hello", name)`;
+
+const STORAGE_KEY = "python_editor_code_v1";
+const LAYOUT_KEY  = "python_editor_layout_v1";
+const FONT_KEY    = "python_editor_font_v1";
+const EMPTY_OUTPUT_HTML =
+    `<div class="output-placeholder">Click Run to execute your Python program.</div>`;
+
+const isCoarse = window.matchMedia("(pointer: coarse)").matches;
+
+/* STATE */
+let inputMode = false;
+let running   = false;
+let abortCtrl = null;
+let errorLine = null;
+let searchMatches = [];
+let searchIndex = -1;
+
+/* Sequential Input State */
+let promptsList = [];
+let collectedInputs = [];
+let currentPromptIndex = 0;
+let lastPromptSig = "";
+
+/* =========================================================
+   RESIZABLE LAYOUT (Desktop only)
+========================================================= */
+const mobileQuery = window.matchMedia("(max-width: 850px)");
+const DEFAULT_LAYOUT = { desk: 0.38, mob: 0.40 };
+let layout = Object.assign({}, DEFAULT_LAYOUT);
+
+try {
+    const saved = JSON.parse(localStorage.getItem(LAYOUT_KEY));
+    if (saved && typeof saved === "object") Object.assign(layout, saved);
+} catch (e) {}
+
+function saveLayout() {
+    try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) {}
+}
+function isMobile() { return mobileQuery.matches; }
+
+function limits(total) {
+    const mobile   = isMobile();
+    const minRight = mobile ? 120 : 260;
+    const minLeft  = mobile ? 140 : 320;
+    const sp = splitter.getBoundingClientRect()[mobile ? "height" : "width"] || 10;
+    let maxRight = total - minLeft - sp;
+    if (maxRight < minRight) maxRight = minRight;
+    return { minRight, maxRight };
+}
+
+function applyLayout() {
+    const rect   = workspace.getBoundingClientRect();
+    const mobile = isMobile();
+    
+    if (mobile) {
+        // Mobile doesn't use the splitter layout, it uses view switching
+        rightSection.style.flex = "";
+        splitter.style.flex = "";
+        editorSection.style.flex = "";
+        return;
+    }
+
+    const total  = rect.width;
+    splitter.setAttribute("aria-orientation", "vertical");
+
+    // Keep the output panel resizable with the splitter.
+    // The old collapse arrow has been removed, so the panel always uses
+    // the saved splitter size instead of switching to a collapsed state.
+
+    const { minRight, maxRight } = limits(total);
+    const frac = layout.desk;
+    const px = Math.min(Math.max(frac * total, minRight), maxRight);
+
+    rightSection.style.flex = `0 0 ${px}px`;
+    splitter.setAttribute("aria-valuenow", Math.round((px / total) * 100));
+}
+
+function setRightSize(px) {
+    if (isMobile()) return;
+    const rect   = workspace.getBoundingClientRect();
+    const total  = rect.width;
+    const { minRight, maxRight } = limits(total);
+    px = Math.min(Math.max(px, minRight), maxRight);
+    layout.desk = px / total;
+    applyLayout();
+}
+
+let dragging = false;
+
+splitter.addEventListener("pointerdown", (e) => {
+    if (isMobile()) return;
+    dragging = true;
+    splitter.setPointerCapture(e.pointerId);
+    splitter.classList.add("active");
+    document.body.classList.add("dragging", "col");
+    e.preventDefault();
+});
+
+splitter.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const rect = workspace.getBoundingClientRect();
+    const sp   = splitter.getBoundingClientRect();
+    setRightSize(rect.right - e.clientX - sp.width / 2);
+});
+
+function endDrag(e) {
+    if (!dragging) return;
+    dragging = false;
+    try { splitter.releasePointerCapture(e.pointerId); } catch (err) {}
+    splitter.classList.remove("active");
+    document.body.classList.remove("dragging", "col");
+    saveLayout();
+}
+splitter.addEventListener("pointerup", endDrag);
+splitter.addEventListener("pointercancel", endDrag);
+
+splitter.addEventListener("dblclick", () => {
+    if (isMobile()) return;
+    layout = Object.assign({}, DEFAULT_LAYOUT);
+    applyLayout();
+    saveLayout();
+});
+
+splitter.addEventListener("keydown", (e) => {
+    if (isMobile()) return;
+    const rect   = workspace.getBoundingClientRect();
+    const total  = rect.width;
+    const current = rightSection.getBoundingClientRect().width;
+    const step = total * 0.03;
+    let handled = true;
+
+    if (e.key === "ArrowLeft")       setRightSize(current + step);
+    else if (e.key === "ArrowRight") setRightSize(current - step);
+    else handled = false;
+    
+    if (e.key === "Home" || e.key === "Enter") {
+        layout = Object.assign({}, DEFAULT_LAYOUT);
+        applyLayout();
+        handled = true;
+    }
+    if (handled) { e.preventDefault(); saveLayout(); }
+});
+
+window.addEventListener("resize", applyLayout);
+window.addEventListener("orientationchange", () => setTimeout(applyLayout, 150));
+if (mobileQuery.addEventListener) mobileQuery.addEventListener("change", applyLayout);
+
+/* =========================================================
+   FONT SIZE
+========================================================= */
+const FONT_MIN = isCoarse ? 16 : 11;
+const FONT_MAX = 26;
+let fontSize = isCoarse ? 16 : 14;
+try {
+    const f = parseInt(localStorage.getItem(FONT_KEY), 10);
+    if (f) fontSize = f;
+} catch (e) {}
+
+function applyFont() {
+    fontSize = Math.min(Math.max(fontSize, FONT_MIN), FONT_MAX);
+    root.style.setProperty("--code-font", fontSize + "px");
+    root.style.setProperty("--code-lh", Math.round(fontSize * 1.6) + "px");
+    try { localStorage.setItem(FONT_KEY, String(fontSize)); } catch (e) {}
+    syncScroll();
+}
+fontDown.addEventListener("click", () => { fontSize -= 1; applyFont(); });
+fontUp.addEventListener("click",   () => { fontSize += 1; applyFont(); });
+
+/* =========================================================
+   SYNTAX HIGHLIGHTING + GUTTER
+========================================================= */
+function syncScroll() {
+    highlightLayer.scrollTop  = codeEditor.scrollTop;
+    highlightLayer.scrollLeft = codeEditor.scrollLeft;
+    lineNumbers.scrollTop     = codeEditor.scrollTop;
+}
+
+function updateHighlight() {
+    let text = codeEditor.value;
+    if (text.endsWith("\n")) text += " ";
+    highlightCode.textContent = text;
+    if (window.Prism) Prism.highlightElement(highlightCode);
+    syncScroll();
+}
+
+function getCurrentLineNumber() {
+    return codeEditor.value.substring(0, codeEditor.selectionStart).split("\n").length;
+}
+
+let gutterKey = "";
+function renderGutter() {
+    const total = codeEditor.value.split("\n").length;
+    const cur   = getCurrentLineNumber();
+    const key   = total + "|" + cur + "|" + errorLine;
+    if (key === gutterKey) return;
+    gutterKey = key;
+
+    let html = "";
+    for (let i = 1; i <= total; i++) {
+        let cls = "line-number";
+        if (i === errorLine) cls += " error";
+        else if (i === cur)  cls += " current";
+        html += `<div class="${cls}">${i}</div>`;
+    }
+    lineNumbers.innerHTML = html;
+    lineNumbers.scrollTop = codeEditor.scrollTop;
+}
+
+function updateCursor() {
+    const before = codeEditor.value.substring(0, codeEditor.selectionStart);
+    const lines  = before.split("\n");
+    cursorPosition.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
+    const count = codeEditor.value.length;
+    charCount.textContent = `${count} character${count === 1 ? "" : "s"}`;
+}
+
+function refreshCursor() { renderGutter(); updateCursor(); }
+
+function updateLineNumbers() {
+    updateHighlight();
+    renderGutter();
+    updateCursor();
+}
+
+function goToLine(n) {
+    const lines = codeEditor.value.split("\n");
+    if (n < 1 || n > lines.length) return;
+    let start = 0;
+    for (let i = 0; i < n - 1; i++) start += lines[i].length + 1;
+    const end = start + lines[n - 1].length;
+    codeEditor.focus();
+    codeEditor.setSelectionRange(start, end);
+    const lh = parseFloat(getComputedStyle(codeEditor).lineHeight) || 22;
+    codeEditor.scrollTop = Math.max(0, (n - 1) * lh - codeEditor.clientHeight / 3);
+    syncScroll();
+    refreshCursor();
+}
+
+/* =========================================================
+   EDIT HELPER (keeps Ctrl+Z / Ctrl+Y working)
+========================================================= */
+function edit(start, end, text, selStart, selEnd) {
+    codeEditor.focus();
+    codeEditor.setSelectionRange(start, end);
+    let ok = false;
+    try {
+        if (text === "") {
+            if (start === end) return;
+            ok = document.execCommand("delete");
+        } else {
+            ok = document.execCommand("insertText", false, text);
+        }
+    } catch (e) {}
+    if (!ok) {
+        codeEditor.setRangeText(text, start, end, "end");
+        codeEditor.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    if (selStart === undefined) selStart = start + text.length;
+    if (selEnd === undefined)   selEnd = selStart;
+    codeEditor.setSelectionRange(selStart, selEnd);
+    refreshCursor();
+}
+
+/* Replace the whole document (undo-able on desktop; no keyboard pop-up on touch) */
+function replaceAll(text) {
+    if (isCoarse) {
+        codeEditor.value = text;
+        codeEditor.dispatchEvent(new Event("input", { bubbles: true }));
+        codeEditor.scrollTop = 0;
+    } else {
+        if (codeEditor.value === "" && text === "") return;
+        if (codeEditor.value === "") {
+            edit(0, 0, text);
+        } else if (text === "") {
+            edit(0, codeEditor.value.length, "");
+        } else {
+            edit(0, codeEditor.value.length, text);
+        }
+        codeEditor.setSelectionRange(0, 0);
+        codeEditor.scrollTop = 0;
+    }
+    syncScroll();
+    refreshCursor();
+}
+
+/* =========================================================
+   SEQUENTIAL INPUT() DETECTION & UI
+========================================================= */
+function extractInputPrompts() {
+    const code = codeEditor.value;
+    const prompts = [];
+    const re = /\binput\s*\(/g;
+    let m;
+    while ((m = re.exec(code)) !== null) {
+        const lineStart = code.lastIndexOf("\n", m.index - 1) + 1;
+        if (code.slice(lineStart, m.index).includes("#")) continue;   // commented out
+
+        const lit = /\s*(?:"((?:[^"\\\n]|\\.)*)"|'((?:[^'\\\n]|\\.)*)')\s*\)/y;
+        lit.lastIndex = re.lastIndex;
+        const mm = lit.exec(code);
+        let p = "";
+        if (mm) p = mm[1] !== undefined ? mm[1] : mm[2];
+        p = p.replace(/\\n/g, "\n").replace(/\\t/g, "\t");
+        prompts.push(p);
+    }
+    return prompts;
+}
+
+function hasInputFunction() { return extractInputPrompts().length > 0; }
+
+function renderNextPrompt() {
+    if (currentPromptIndex >= promptsList.length) return;
+
+    const prompt = promptsList[currentPromptIndex];
+    const row = document.createElement("div");
+    row.className = "input-row";
+
+    const label = document.createElement("span");
+    label.className = "input-prompt";
+    label.textContent = prompt || `Input ${currentPromptIndex + 1}:`;
+    label.title = label.textContent;
+
+    const field = document.createElement("input");
+    field.className = "input-field";
+    field.type = "text";
+    field.placeholder = "";
+    field.setAttribute("aria-label", label.textContent);
+
+    field.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleInputSubmit(field.value);
+        }
+    });
+
+    row.appendChild(label);
+    row.appendChild(field);
+    inputBody.appendChild(row);
+    inputBody.scrollTop = inputBody.scrollHeight;
+    field.focus();
+}
+
+function resetExecutionInputState() {
+    // Every Run starts with a completely new input/execution session.
+    // Do not carry over any values, queue entries, indexes, or prompt state.
+    inputMode = false;
+    promptsList = [];
+    collectedInputs = [];
+    currentPromptIndex = 0;
+    lastPromptSig = "";
+    errorLine = null;
+
+    inputSection.classList.remove("visible");
+    inputBody.innerHTML = "";
+    inputStatus.textContent = "Waiting for input";
+}
+
+function startInputSequence() {
+    // startInputSequence is also safe to call independently; always rebuild
+    // the sequential input UI from the current editor contents.
+    promptsList = extractInputPrompts();
+    if (promptsList.length === 0) {
+        inputSection.classList.remove("visible");
+        inputMode = false;
+        return false;
+    }
+
+    collectedInputs = [];
+    currentPromptIndex = 0;
+    lastPromptSig = JSON.stringify(promptsList);
+
+    inputBody.innerHTML = "";
+    inputSection.classList.add("visible");
+    inputMode = true;
+    inputStatus.textContent = `Waiting for input 1 of ${promptsList.length}`;
+    renderNextPrompt();
+    return true;
+}
+
+function handleInputSubmit(value) {
+    collectedInputs.push(value);
+
+    // Convert the last input field to static text to preserve history
+    const lastRow = inputBody.lastChild;
+    const field = lastRow.querySelector(".input-field");
+    const staticValue = document.createElement("span");
+    staticValue.className = "input-history-value";
+    staticValue.textContent = value;
+    lastRow.replaceChild(staticValue, field);
+
+    currentPromptIndex++;
+    if (currentPromptIndex < promptsList.length) {
+        inputStatus.textContent = `Waiting for input ${currentPromptIndex + 1} of ${promptsList.length}`;
+        renderNextPrompt();
+    } else {
+        inputStatus.textContent = "All inputs received. Running...";
+        executeCode();
+    }
+}
+
+/* Keep typed values while the code is edited (restarts sequential input if prompts change) */
+function syncInputRows() {
+    if (!inputMode) return;
+    const newPrompts = extractInputPrompts();
+    const sig = JSON.stringify(newPrompts);
+    if (sig === lastPromptSig) return;
+
+    lastPromptSig = sig;
+    startInputSequence();
+}
+
+function getUserInput() {
+    return collectedInputs.join("\n");
+}
+
+/* Python's input("prompt") echoes the prompt to stdout; remove it from the output */
+function stripInputPrompts(text) {
+    if (!text) return "";
+    if (!inputMode) return text;
+
+    let result = text;
+    extractInputPrompts().forEach((prompt) => {
+        if (prompt && prompt.length > 0) {
+            const escaped = prompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            result = result.replace(new RegExp(escaped, "g"), "");
+        }
+    });
+    return result;
+}
+
+/* =========================================================
+   STATUS / OUTPUT
+========================================================= */
+function setStatus(type, message) {
+    statusDot.className = "status-dot";
+    if (type === "ready")        statusDot.classList.add("ready");
+    else if (type === "running") statusDot.classList.add("running");
+    else if (type === "error")   statusDot.classList.add("error");
+    statusText.textContent = message;
+}
+
+function resetOutput() {
+    outputConsole.innerHTML = EMPTY_OUTPUT_HTML;
+    copyButton.classList.remove("visible");
+    clearOutputBtn.classList.remove("visible");
+    setStatus("ready", "Ready");
+}
+
+function showOutputButtons() {
+    copyButton.classList.add("visible");
+    clearOutputBtn.classList.add("visible");
+}
+
+/*
+ * ANSI / SGR terminal renderer.
+ *
+ * The parser is deliberately stateful: push() may receive an arbitrary
+ * chunk and keeps an incomplete ESC[... sequence until the next chunk.
+ * This keeps the renderer safe for streamed/chunked terminal data even
+ * though the current /run endpoint returns one JSON response.
+ *
+ * Normal output is ALWAYS inserted with createTextNode/textContent.
+ * Only spans created by this renderer receive styles, so stdout/stderr
+ * cannot inject HTML into the Shell Output.
+ */
+class AnsiTerminalRenderer {
+    constructor() {
+        this.buffer = "";
+        this.state = {
+            bold: false,
+            italic: false,
+            underline: false,
+            foreground: null,
+            background: null,
+        };
+    }
+
+    push(chunk) {
+        if (chunk === null || chunk === undefined) return document.createDocumentFragment();
+        this.buffer += String(chunk);
+        return this._parse(false);
+    }
+
+    finish() {
+        return this._parse(true);
+    }
+
+    _parse(flush) {
+        const frag = document.createDocumentFragment();
+        let text = "";
+
+        const emitText = () => {
+            if (!text) return;
+            if (this._hasStyle()) {
+                const span = document.createElement("span");
+                span.style.cssText = this._styleText();
+                span.textContent = text;
+                frag.appendChild(span);
+            } else {
+                frag.appendChild(document.createTextNode(text));
+            }
+            text = "";
+        };
+
+        const source = this.buffer;
+        let i = 0;
+
+        while (i < source.length) {
+            const ch = source[i];
+
+            if (ch !== "\x1b") {
+                text += ch;
+                i++;
+                continue;
+            }
+
+            // ESC[ ... final-byte is a CSI sequence. Keep incomplete data
+            // for the next chunk instead of displaying it as raw text.
+            if (i + 1 >= source.length) {
+                if (!flush) break;
+                i++;
+                continue;
+            }
+
+            if (source[i + 1] !== "[") {
+                // Unknown ANSI escape: consume the ESC itself, but preserve
+                // the following printable character as normal terminal text.
+                i++;
+                continue;
+            }
+
+            let j = i + 2;
+            while (j < source.length && !(source.charCodeAt(j) >= 0x40 && source.charCodeAt(j) <= 0x7e)) {
+                j++;
+            }
+
+            if (j >= source.length) {
+                if (!flush) break;
+                // Incomplete sequence at the end of the final chunk: do not
+                // leak its control syntax into the Shell Output.
+                i = source.length;
+                continue;
+            }
+
+            const finalByte = source[j];
+            const paramsText = source.slice(i + 2, j);
+            emitText();
+
+            if (finalByte === "m") {
+                this._applySgr(paramsText);
+            }
+
+            i = j + 1;
+        }
+
+        if (flush || i > 0) {
+            this.buffer = source.slice(i);
+        }
+        emitText();
+        return frag;
+    }
+
+    _applySgr(paramsText) {
+        let params;
+        if (paramsText === "" || paramsText === ";") {
+            params = [0];
+        } else {
+            params = paramsText.split(";").map(v => v === "" ? 0 : Number(v));
+        }
+
+        for (let i = 0; i < params.length; i++) {
+            const code = params[i];
+            if (!Number.isFinite(code)) continue;
+
+            if (code === 0) {
+                this.state.bold = false;
+                this.state.italic = false;
+                this.state.underline = false;
+                this.state.foreground = null;
+                this.state.background = null;
+            } else if (code === 1) {
+                this.state.bold = true;
+            } else if (code === 22) {
+                this.state.bold = false;
+            } else if (code === 3) {
+                this.state.italic = true;
+            } else if (code === 23) {
+                this.state.italic = false;
+            } else if (code === 4) {
+                this.state.underline = true;
+            } else if (code === 24) {
+                this.state.underline = false;
+            } else if (code === 39) {
+                this.state.foreground = null;
+            } else if (code === 49) {
+                this.state.background = null;
+            } else if (code >= 30 && code <= 37) {
+                this.state.foreground = ANSI_COLORS[code - 30];
+            } else if (code >= 40 && code <= 47) {
+                this.state.background = ANSI_COLORS[code - 40];
+            } else if (code >= 90 && code <= 97) {
+                this.state.foreground = ANSI_BRIGHT_COLORS[code - 90];
+            } else if (code >= 100 && code <= 107) {
+                this.state.background = ANSI_BRIGHT_COLORS[code - 100];
+            } else if (code === 38 || code === 48) {
+                const isBackground = code === 48;
+                const mode = params[i + 1];
+
+                if (mode === 5 && Number.isFinite(params[i + 2])) {
+                    const color = ansi256Color(params[i + 2]);
+                    if (isBackground) this.state.background = color;
+                    else this.state.foreground = color;
+                    i += 2;
+                } else if (mode === 2 && params.length >= i + 5 &&
+                           params.slice(i + 2, i + 5).every(Number.isFinite)) {
+                    const color = `rgb(${params[i + 2]}, ${params[i + 3]}, ${params[i + 4]})`;
+                    if (isBackground) this.state.background = color;
+                    else this.state.foreground = color;
+                    i += 4;
+                }
+            }
+        }
+    }
+
+    _hasStyle() {
+        return this.state.bold || this.state.italic || this.state.underline ||
+               !!this.state.foreground || !!this.state.background;
+    }
+
+    _styleText() {
+        const styles = [];
+        if (this.state.foreground) styles.push(`color:${this.state.foreground}`);
+        if (this.state.background) styles.push(`background-color:${this.state.background}`);
+        if (this.state.bold) styles.push("font-weight:700");
+        if (this.state.italic) styles.push("font-style:italic");
+        if (this.state.underline) styles.push("text-decoration:underline");
+        return styles.join(";");
+    }
+}
+
+const ANSI_COLORS = [
+    "#000000", "#cd3131", "#0dbc79", "#e5e510",
+    "#2472c8", "#bc3fbc", "#11a8cd", "#e5e5e5"
+];
+
+const ANSI_BRIGHT_COLORS = [
+    "#666666", "#f14c4c", "#23d18b", "#f5f543",
+    "#3b8eea", "#d670d6", "#29b8db", "#ffffff"
+];
+
+function ansi256Color(n) {
+    n = Math.max(0, Math.min(255, Number(n) || 0));
+    if (n < 8) return ANSI_COLORS[n];
+    if (n < 16) return ANSI_BRIGHT_COLORS[n - 8];
+    if (n >= 232) {
+        const v = 8 + (n - 232) * 10;
+        return `rgb(${v}, ${v}, ${v})`;
+    }
+    const index = n - 16;
+    const r = Math.floor(index / 36);
+    const g = Math.floor((index % 36) / 6);
+    const b = index % 6;
+    const level = [0, 95, 135, 175, 215, 255];
+    return `rgb(${level[r]}, ${level[g]}, ${level[b]})`;
+}
+
+function renderAnsiText(text) {
+    const renderer = new AnsiTerminalRenderer();
+    const frag = renderer.push(text || "");
+    const tail = renderer.finish();
+    frag.appendChild(tail);
+    return frag;
+}
+
+/*
+ * Render a traceback with ANSI styling while preserving the existing
+ * clickable "File \"main.py\", line N" behavior.
+ */
+function renderErrorText(text) {
+    const root = document.createDocumentFragment();
+    const styled = renderAnsiText(text || "");
+    const walker = document.createTreeWalker(styled, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+
+    const re = /(File "main\.py", )(line (\d+))/g;
+    let lastLine = null;
+
+    nodes.forEach((textNode) => {
+        const value = textNode.nodeValue || "";
+        re.lastIndex = 0;
+        if (!re.test(value)) return;
+        re.lastIndex = 0;
+
+        const replacement = document.createDocumentFragment();
+        let last = 0;
+        let m;
+        while ((m = re.exec(value)) !== null) {
+            if (m.index > last) replacement.appendChild(document.createTextNode(value.slice(last, m.index + m[1].length)));
+            else replacement.appendChild(document.createTextNode(m[1]));
+
+            const a = document.createElement("a");
+            a.href = "#";
+            a.className = "error-link";
+            a.textContent = m[2];
+            a.dataset.line = m[3];
+            a.title = "Go to this line";
+            replacement.appendChild(a);
+            last = m.index + m[0].length;
+            lastLine = parseInt(m[3], 10);
+        }
+        if (last < value.length) replacement.appendChild(document.createTextNode(value.slice(last)));
+        textNode.parentNode.replaceChild(replacement, textNode);
+    });
+
+    while (styled.firstChild) root.appendChild(styled.firstChild);
+    return { frag: root, lastLine };
+}
+
+/* Render terminal output safely; stdout and stderr use the same ANSI path. */
+function renderShellOutput(container, text) {
+    container.replaceChildren();
+    const renderer = new AnsiTerminalRenderer();
+    container.appendChild(renderer.push(text || ""));
+    container.appendChild(renderer.finish());
+    return renderer;
+}
+
+
+function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise((resolve, reject) => {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+        ok ? resolve() : reject();
+    });
+}
+
+function flashLabel(btn, text) {
+    const original = btn.textContent;
+    btn.textContent = text;
+    setTimeout(() => btn.textContent = original, 1200);
+}
+
+/* =========================================================
+   RUN / STOP
+========================================================= */
+async function runCode() {
+    if (running) return;
+
+    const code = codeEditor.value;
+    if (!code.trim()) {
+        outputConsole.innerHTML =
+            `<div class="output-error">Please enter some Python code.</div>`;
+        setStatus("error", "Error");
+        return;
+    }
+
+    // IMPORTANT: every Run is a brand-new execution.
+    // Clear all input values, the input queue/index, prompt state, and
+    // previous execution state before looking for input() again.
+    resetExecutionInputState();
+
+    if (isMobile()) {
+        document.body.classList.add("shell-view");
+    }
+
+    if (hasInputFunction()) {
+        outputConsole.innerHTML =
+            `<div class="output-placeholder">Enter the required values above, then click Run again.</div>`;
+        startInputSequence();
+        setStatus("running", "Waiting for input");
+        return;
+    }
+
+    await executeCode();
+}
+
+
+
+async function executeCode() {
+    running = true;
+    errorLine = null;
+    renderGutter();
+    runButton.disabled = true;
+    runButton.classList.add("hidden");
+    stopButton.classList.add("visible");
+    setStatus("running", "Running...");
+
+    outputConsole.innerHTML =
+        `<div class="output-placeholder">Running your Python program...</div>`;
+    copyButton.classList.remove("visible");
+    clearOutputBtn.classList.remove("visible");
+
+    const userInput = inputMode ? getUserInput() : "";
+    const t0 = performance.now();
+    abortCtrl = new AbortController();
+
+    try {
+        const resp = await fetch("/run", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code: codeEditor.value, input: userInput }),
+            signal: abortCtrl.signal,
+        });
+        const data = await resp.json();
+        const secs = ((performance.now() - t0) / 1000).toFixed(2);
+
+        outputConsole.innerHTML = "";
+
+        if (data.success) {
+            const out = stripInputPrompts(data.output || "");
+
+            if (out.trim().length === 0) {
+                outputConsole.innerHTML =
+                    `<div class="output-placeholder">Program finished successfully with no output.</div>`;
+            } else {
+                renderShellOutput(outputConsole, out);
+                showOutputButtons();
+            }
+            setStatus("ready", `Finished · ${secs}s`);
+            if (inputMode) inputStatus.textContent = "Completed";
+        } else {
+            const cleanOutput = stripInputPrompts(data.output);
+
+            if (cleanOutput) {
+                const block = document.createElement("div");
+                block.appendChild(renderAnsiText(cleanOutput));
+                outputConsole.appendChild(block);
+            }
+
+            let errText = data.error || "Program error.";
+            if (/EOFError/.test(errText)) {
+                errText += "\n\nHint: the program asked for more input() values than were provided. " +
+                           "Make sure your code has the right number of input() calls and run again.";
+            }
+
+            const err = document.createElement("div");
+            err.className = "output-error";
+            err.style.marginTop = cleanOutput ? "10px" : "0";
+            const { frag, lastLine } = renderErrorText(errText);
+            err.appendChild(frag);
+            outputConsole.appendChild(err);
+
+            if (lastLine) { errorLine = lastLine; renderGutter(); }
+
+            setStatus("error", "Error");
+            showOutputButtons();
+        }
+    } catch (err) {
+        if (err.name === "AbortError") {
+            outputConsole.innerHTML =
+                `<div class="output-placeholder">Execution cancelled.</div>`;
+            setStatus("ready", "Cancelled");
+        } else {
+            outputConsole.innerHTML =
+                `<div class="output-error">Unable to connect to the Python server.</div>`;
+            setStatus("error", "Connection Error");
+        }
+    } finally {
+        running = false;
+        abortCtrl = null;
+        runButton.disabled = false;
+        runButton.classList.remove("hidden");
+        stopButton.classList.remove("visible");
+    }
+}
+
+function stopRun() { if (abortCtrl) abortCtrl.abort(); }
+
+headerBackBtn.addEventListener("click", () => {
+    document.body.classList.remove("shell-view");
+    if (!isCoarse) codeEditor.focus();
+});
+
+/* =========================================================
+   OPEN / SAVE AS / UNDO / REDO / CLEAR / RESET / COPY
+========================================================= */
+
+let currentFileName = "main.py";
+let currentTabId = "file-1";
+let fileTabs = [{ id: currentTabId, name: "main.py", code: DEFAULT_CODE, fileHandle: null }];
+const fileTabsEl = document.getElementById("fileTabs");
+
+function activeTab() {
+    return fileTabs.find(tab => tab.id === currentTabId) || fileTabs[0];
+}
+
+function renderFileTabs() {
+    if (!fileTabsEl) return;
+    fileTabsEl.innerHTML = "";
+
+    fileTabs.forEach(tab => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "file-tab" + (tab.id === currentTabId ? " active" : "");
+        button.setAttribute("role", "tab");
+        button.setAttribute("aria-selected", tab.id === currentTabId ? "true" : "false");
+        button.title = tab.name;
+
+        const name = document.createElement("span");
+        name.textContent = tab.name;
+        button.appendChild(name);
+
+        if (fileTabs.length > 1) {
+            const close = document.createElement("span");
+            close.className = "file-tab-close";
+            close.textContent = "×";
+            close.title = "Close file";
+            close.addEventListener("click", (event) => {
+                event.stopPropagation();
+                closeFileTab(tab.id);
+            });
+            button.appendChild(close);
+        }
+
+        button.addEventListener("click", () => switchFileTab(tab.id));
+        fileTabsEl.appendChild(button);
+    });
+
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "file-tab file-tab-add";
+    add.textContent = "+";
+    add.title = "Add new Python file";
+    add.setAttribute("aria-label", "Add new Python file");
+    add.addEventListener("click", createNewFile);
+    fileTabsEl.appendChild(add);
+}
+
+function syncActiveTab() {
+    const tab = activeTab();
+    if (tab) {
+        tab.name = currentFileName;
+        tab.code = codeEditor.value;
+    }
+}
+
+function updateFileName(name) {
+    currentFileName = name || "main.py";
+    const tab = activeTab();
+    if (tab) tab.name = currentFileName;
+    if (fileNameDisplay) fileNameDisplay.textContent = currentFileName;
+    renderFileTabs();
+}
+
+function uniquePythonName(base = "main.py") {
+    const clean = normalizePythonFileName(base, "main.py");
+    const existing = new Set(fileTabs.map(tab => tab.name.toLowerCase()));
+    if (!existing.has(clean.toLowerCase())) return clean;
+    const stem = clean.replace(/\.py$/i, "");
+    let n = 2;
+    while (existing.has(`${stem}${n}.py`.toLowerCase())) n++;
+    return `${stem}${n}.py`;
+}
+
+function createNewFile() {
+    syncActiveTab();
+    const id = `file-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const name = uniquePythonName("main.py");
+    fileTabs.push({ id, name, code: DEFAULT_CODE, fileHandle: null });
+    currentTabId = id;
+    currentFileName = name;
+    codeEditor.value = DEFAULT_CODE;
+    hideInputs();
+    resetOutput();
+    renderFileTabs();
+    updateFileName(name);
+    saveCode();
+    updateLineNumbers();
+    if (!isCoarse) codeEditor.focus();
+    setStatus("ready", `New file · ${name}`);
+}
+
+function switchFileTab(id) {
+    if (id === currentTabId) return;
+    syncActiveTab();
+    const tab = fileTabs.find(item => item.id === id);
+    if (!tab) return;
+    currentTabId = id;
+    currentFileName = tab.name;
+    codeEditor.value = tab.code;
+    hideInputs();
+    resetOutput();
+    renderFileTabs();
+    if (fileNameDisplay) fileNameDisplay.textContent = currentFileName;
+    saveCode();
+    updateHighlight();
+    updateLineNumbers();
+    if (!isCoarse) codeEditor.focus();
+    setStatus("ready", `Opened · ${currentFileName}`);
+}
+
+function closeFileTab(id) {
+    if (fileTabs.length === 1) {
+        setStatus("ready", "At least one Python file must remain open");
+        return;
+    }
+    const index = fileTabs.findIndex(tab => tab.id === id);
+    if (index < 0) return;
+    const closingCurrent = id === currentTabId;
+    fileTabs.splice(index, 1);
+    if (closingCurrent) {
+        const next = fileTabs[Math.max(0, index - 1)];
+        currentTabId = next.id;
+        currentFileName = next.name;
+        codeEditor.value = next.code;
+        updateFileName(next.name);
+        updateHighlight();
+        updateLineNumbers();
+        hideInputs();
+        resetOutput();
+    }
+    saveCode();
+    renderFileTabs();
+    setStatus("ready", `File closed · ${currentFileName}`);
+}
+
+
+function undoEdit() {
+    codeEditor.focus();
+    try {
+        document.execCommand("undo");
+    } catch (e) {}
+    saveCode();
+    updateLineNumbers();
+}
+
+function redoEdit() {
+    codeEditor.focus();
+    try {
+        document.execCommand("redo");
+    } catch (e) {}
+    saveCode();
+    updateLineNumbers();
+}
+
+function openSelectedFile(file) {
+    if (!file) return;
+
+    const filename = file.name || "";
+    if (!/\.py$/i.test(filename)) {
+        openFileInput.value = "";
+        outputConsole.innerHTML =
+            `<div class="output-error">Only Python (.py) files can be opened.</div>`;
+        setStatus("error", "Python files only");
+        return;
+    }
+
+    file.text().then((text) => {
+        hideInputs();
+        resetOutput();
+
+        /*
+         * setRangeText is used so the browser keeps the textarea's
+         * normal edit/selection behavior. The loaded document becomes
+         * the current editor content without changing the editor UI.
+         */
+        syncActiveTab();
+        const existing = fileTabs.find(tab => tab.name.toLowerCase() === file.name.toLowerCase());
+        if (existing) {
+            existing.code = text;
+
+            currentTabId = existing.id;
+        } else {
+            const id = `file-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+            fileTabs.push({ id, name: file.name, code: text, fileHandle: null });
+            currentTabId = id;
+        }
+        currentFileName = file.name;
+        codeEditor.value = text;
+        updateFileName(file.name);
+        saveCode();
+        updateHighlight();
+        updateLineNumbers();
+
+        if (!isCoarse) codeEditor.focus();
+    }).catch(() => {
+        outputConsole.innerHTML =
+            `<div class="output-error">Unable to open the selected file.</div>`;
+        setStatus("error", "Open Error");
+    }).finally(() => {
+        openFileInput.value = "";
+    });
+}
+
+function normalizePythonFileName(name, fallback = "main.py") {
+    let filename = (name || "").trim();
+    if (!filename) filename = fallback;
+
+    // Keep this application Python-only. Remove path separators so the
+    // browser/OS controls the destination folder, not the typed filename.
+    filename = filename.replace(/[\\/]+/g, "");
+
+    if (!/\.py$/i.test(filename)) {
+        filename = filename.replace(/\.[^./\\]*$/, "") + ".py";
+    }
+
+    return filename || "main.py";
+}
+
+async function chooseSaveLocation(suggestedName, description) {
+    const filename = normalizePythonFileName(suggestedName);
+
+    // Desktop Chromium browsers can open the real Save As picker. This avoids
+    // the normal browser download flow and lets the user choose a folder.
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: filename,
+                types: [{
+                    description: description || "Python program",
+                    accept: { "text/x-python": [".py"] }
+                }],
+                excludeAcceptAllOption: true
+            });
+
+            const finalName = normalizePythonFileName(handle.name, filename);
+            const tab = activeTab();
+            if (tab) tab.fileHandle = handle;
+            const writable = await handle.createWritable();
+            await writable.write(codeEditor.value);
+            await writable.close();
+
+            updateFileName(finalName);
+            markClean();
+            saveCode();
+            setStatus("ready", `Saved · ${finalName}`);
+            return true;
+        } catch (err) {
+            // Closing/cancelling the native dialog is normal.
+            if (err && err.name === "AbortError") return false;
+
+            setStatus("error", "Save Error");
+            outputConsole.innerHTML =
+                `<div class="output-error">Unable to save the Python program to that location.</div>`;
+            return false;
+        }
+    }
+
+    // Android/mobile browsers commonly do not provide showSaveFilePicker.
+    // Do NOT fall back to an <a download> because an HTTP LAN address can
+    // trigger Chrome's "File can't be downloaded securely" warning.
+    const file = new File([codeEditor.value], filename, {
+        type: "text/x-python;charset=utf-8"
+    });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({
+                title: filename,
+                text: "Python program",
+                files: [file]
+            });
+            updateFileName(filename);
+            markClean();
+            saveCode();
+            setStatus("ready", `Saved · ${filename}`);
+            return true;
+        } catch (err) {
+            if (err && err.name === "AbortError") return false;
+        }
+    }
+
+    // Mobile fallback: if the browser cannot expose a real Save As picker
+    // and cannot share files, use the normal browser file-save/download flow
+    // only from a secure page. This makes the button functional on more
+    // Android browsers while avoiding the insecure-download warning caused by
+    // serving the app over plain HTTP.
+    if (window.isSecureContext || location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+        try {
+            const blob = new Blob([codeEditor.value], { type: "text/x-python;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            updateFileName(filename);
+            markClean();
+            saveCode();
+            setStatus("ready", `Saved · ${filename}`);
+            return true;
+        } catch (err) {
+            setStatus("error", "Save Error");
+            outputConsole.innerHTML =
+                `<div class="output-error">The browser could not save the Python program. Please use Chrome or Edge over HTTPS.</div>`;
+            return false;
+        }
+    }
+
+    setStatus("error", "Secure connection required");
+    outputConsole.innerHTML =
+        `<div class="output-error">Mobile Save As needs HTTPS. Open PyOlympiad using an HTTPS address, then tap Save As again.</div>`;
+    return false;
+}
+
+async function saveCurrentFile() {
+    const tab = activeTab();
+    if (tab && tab.fileHandle && window.showSaveFilePicker) {
+        try {
+            const writable = await tab.fileHandle.createWritable();
+            await writable.write(codeEditor.value);
+            await writable.close();
+            markClean();
+            saveCode();
+            setStatus("ready", `Saved · ${currentFileName}`);
+            return;
+        } catch (err) {
+            if (err && err.name === "AbortError") return;
+        }
+    }
+    await saveAsFile();
+}
+
+async function saveAsFile() {
+    await chooseSaveLocation(currentFileName || "main.py", "Save Python program as");
+}
+
+function renameProgram() {
+    const requestedName = window.prompt("Rename Python program:", currentFileName || "main.py");
+    if (requestedName === null) return;
+
+    const filename = normalizePythonFileName(requestedName, currentFileName || "main.py");
+    updateFileName(filename);
+    saveCode();
+    setStatus("ready", `Program renamed · ${filename}`);
+}
+
+openButton.addEventListener("click", () => {
+    openFileInput.click();
+});
+
+openFileInput.addEventListener("change", () => {
+    const file = openFileInput.files && openFileInput.files[0];
+    openSelectedFile(file);
+});
+
+saveAsButton.addEventListener("click", saveAsFile);
+renameButton.addEventListener("click", renameProgram);
+
+/* EDITOR MENU */
+function closeEditorMenu() {
+    if (!editorMenuPanel) return;
+    editorMenuPanel.classList.remove("open");
+    menuButton.setAttribute("aria-expanded", "false");
+}
+
+menuButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const isOpen = !editorMenuPanel.classList.contains("open");
+    editorMenuPanel.classList.toggle("open", isOpen);
+    menuButton.setAttribute("aria-expanded", isOpen ? "true" : "false");
+});
+
+editorMenuPanel.addEventListener("click", (event) => {
+    event.stopPropagation();
+});
+
+menuRenameButton.addEventListener("click", () => {
+    renameButton.click();
+    closeEditorMenu();
+});
+
+menuCopyButton.addEventListener("click", () => {
+    copyCodeButton.click();
+    closeEditorMenu();
+});
+
+menuClearButton.addEventListener("click", () => {
+    clearButton.click();
+    closeEditorMenu();
+});
+
+menuResetButton.addEventListener("click", () => {
+    closeEditorMenu();
+    resetButton.click();
+});
+
+menuFontDown.addEventListener("click", () => {
+    fontDown.click();
+    closeEditorMenu();
+});
+
+menuFontUp.addEventListener("click", () => {
+    fontUp.click();
+    closeEditorMenu();
+});
+
+document.addEventListener("click", (event) => {
+    if (!event.target.closest(".editor-menu")) closeEditorMenu();
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeEditorMenu();
+});
+
+undoButton.addEventListener("click", undoEdit);
+redoButton.addEventListener("click", redoEdit);
+
+function hideInputs() {
+    resetExecutionInputState();
+}
+
+function clearCode() {
+    if (!window.confirm("Clear the code in this file? You can use Undo to bring it back.")) return;
+    hideInputs();
+    resetOutput();
+    replaceAll("");
+    codeEditor.focus();
+}
+
+function resetCode() {
+    if (!window.confirm("Reset this file to the starter Python code?")) return;
+    hideInputs();
+    resetOutput();
+    replaceAll(DEFAULT_CODE);
+
+    // Reset the program back to the original starter state as well.
+    // This keeps the displayed program name in sync with the reset code.
+    updateFileName("main.py");
+    saveCode();
+
+    setStatus("ready", "Reset · main.py");
+    if (!isCoarse) codeEditor.focus();
+}
+
+copyCodeButton.addEventListener("click", () => {
+    copyText(codeEditor.value)
+        .then(() => flashLabel(copyCodeButton, "Copied!"))
+        .catch(() => flashLabel(copyCodeButton, "Failed"));
+});
+
+
+/* PERSISTENCE */
+function saveCode() {
+    syncActiveTab();
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            tabs: fileTabs,
+            activeId: currentTabId
+        }));
+    } catch (e) {}
+}
+function loadCode() {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed.tabs) && parsed.tabs.length) {
+                fileTabs = parsed.tabs.filter(tab => tab && tab.id && tab.name && typeof tab.code === "string")
+                    .map(tab => Object.assign({ fileHandle: null }, tab, { fileHandle: null }));
+                if (!fileTabs.length) throw new Error("No valid tabs");
+                currentTabId = fileTabs.some(tab => tab.id === parsed.activeId) ? parsed.activeId : fileTabs[0].id;
+                const tab = activeTab();
+                currentFileName = tab.name;
+                codeEditor.value = tab.code;
+                renderFileTabs();
+                updateFileName(currentFileName);
+                return;
+            }
+            // Backward compatibility with the previous single-file storage format.
+            if (typeof saved === "string" && !saved.trim().startsWith("{")) {
+                codeEditor.value = saved || DEFAULT_CODE;
+                fileTabs[0].code = codeEditor.value;
+            }
+        }
+    } catch (e) {}
+    const tab = activeTab();
+    codeEditor.value = tab.code || DEFAULT_CODE;
+    renderFileTabs();
+    updateFileName(tab.name);
+}
+
+/* =========================================================
+   INDENTATION HELPERS
+========================================================= */
+function getCurrentLineInfo() {
+    const value  = codeEditor.value;
+    const cursor = codeEditor.selectionStart;
+    const lineStart  = value.lastIndexOf("\n", cursor - 1) + 1;
+    const lineEndIdx = value.indexOf("\n", cursor);
+    const lineEnd = lineEndIdx === -1 ? value.length : lineEndIdx;
+    return { value, cursor, lineStart, lineEnd, line: value.substring(lineStart, lineEnd) };
+}
+
+function getIndentation(line) {
+    const m = line.match(/^[ \t]*/);
+    return m ? m[0] : "";
+}
+
+function isBlockStart(line) {
+    const t = line.trim();
+    if (!t) return false;
+    return /^(if|elif|else|for|while|def|class|try|except|finally|with|async\s+def|async\s+for|async\s+with)\b.*:\s*(#.*)?$/.test(t);
+}
+
+function findMatchingParentIndent(keyword, currentLineIndex) {
+    const lines = codeEditor.value.split("\n");
+    for (let i = currentLineIndex - 1; i >= 0; i--) {
+        const t = lines[i].trim();
+        if (!t) continue;
+        const indent = getIndentation(lines[i]);
+
+        if (keyword === "else" || keyword === "elif") {
+            if (/^(if|elif|for|while|try|with)\b.*:\s*(#.*)?$/.test(t)) return indent;
+        }
+        if (keyword === "except" || keyword === "finally") {
+            if (/^try\b.*:\s*(#.*)?$/.test(t)) return indent;
+        }
+    }
+    return null;
+}
+
+/* =========================================================
+   KEY HANDLERS
+========================================================= */
+
+/* Tab / Shift+Tab */
+codeEditor.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    e.preventDefault();
+
+    const value = codeEditor.value;
+    const s  = codeEditor.selectionStart;
+    const en = codeEditor.selectionEnd;
+
+    if (s === en && !e.shiftKey) { edit(s, en, "    "); return; }
+
+    const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+    let blockEnd = en;
+    if (s === en) {
+        const i = value.indexOf("\n", s);
+        blockEnd = i === -1 ? value.length : i;
+    }
+
+    const block   = value.substring(lineStart, blockEnd);
+    const updated = e.shiftKey
+        ? block.replace(/^ {1,4}/gm, "")
+        : block.replace(/^(?=[^\n])/gm, "    ");
+    if (updated === block) return;
+
+    if (s === en) {
+        const cursor = Math.max(lineStart, s - (block.length - updated.length));
+        edit(lineStart, blockEnd, updated, cursor, cursor);
+    } else {
+        edit(lineStart, blockEnd, updated, lineStart, lineStart + updated.length);
+    }
+});
+
+/* Enter (smart indent) */
+codeEditor.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+    e.preventDefault();
+
+    const info = getCurrentLineInfo();
+    const s  = codeEditor.selectionStart;
+    const en = codeEditor.selectionEnd;
+    const beforeCursor = info.line.substring(0, s - info.lineStart);
+    const indent = getIndentation(beforeCursor);
+    const newIndent = isBlockStart(beforeCursor) ? indent + "    " : indent;
+
+    edit(s, en, "\n" + newIndent);
+});
+
+/* Backspace: remove indentation by 4, or delete an empty auto-closed pair */
+codeEditor.addEventListener("keydown", (e) => {
+    if (e.key !== "Backspace" || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (codeEditor.selectionStart !== codeEditor.selectionEnd) return;
+
+    const cursor = codeEditor.selectionStart;
+    if (cursor <= 0) return;
+    const value = codeEditor.value;
+    const lineStart = value.lastIndexOf("\n", cursor - 1) + 1;
+    const beforeCursor = value.substring(lineStart, cursor);
+
+    if (/^ +$/.test(beforeCursor)) {
+        e.preventDefault();
+        const remove = beforeCursor.length % 4 === 0 ? 4 : beforeCursor.length % 4;
+        edit(cursor - remove, cursor, "");
+        return;
+    }
+
+    const left = value[cursor - 1], right = value[cursor];
+    if (PAIRS[left] && PAIRS[left] === right) {
+        e.preventDefault();
+        edit(cursor - 1, cursor + 1, "");
+    }
+});
+
+/* Auto-close brackets and quotes, with skip-over */
+const PAIRS   = { "(": ")", "[": "]", "{": "}", '"': '"', "'": "'" };
+const CLOSERS = new Set([")", "]", "}", '"', "'"]);
+
+codeEditor.addEventListener("keydown", (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
+
+    const s = codeEditor.selectionStart;
+    const en = codeEditor.selectionEnd;
+    const value = codeEditor.value;
+    const next = value[s] || "";
+    const prev = value[s - 1] || "";
+
+    // Typing a closing character that is already there: just move past it
+    if (s === en && CLOSERS.has(e.key) && next === e.key) {
+        e.preventDefault();
+        codeEditor.setSelectionRange(s + 1, s + 1);
+        refreshCursor();
+        return;
+    }
+
+    if (!PAIRS[e.key]) return;
+    const close = PAIRS[e.key];
+    const isQuote = e.key === '"' || e.key === "'";
+
+    // Wrap a selection
+    if (s !== en) {
+        e.preventDefault();
+        edit(s, en, e.key + value.substring(s, en) + close, s + 1, en + 1);
+        return;
+    }
+
+    // Don't pair apostrophes inside words (don't, it's) or before text
+    if (isQuote && (/\w/.test(prev) || /\w/.test(next))) return;
+    if (!isQuote && next && !/[\s)\]};,:]/.test(next)) return;
+
+    e.preventDefault();
+    edit(s, s, e.key + close, s + 1, s + 1);
+});
+
+/* else / elif / except / finally auto-align */
+codeEditor.addEventListener("keydown", (e) => {
+    if (e.key !== ":") return;
+
+    const info = getCurrentLineInfo();
+    const beforeCursor = info.line.substring(0, info.cursor - info.lineStart);
+    const m = beforeCursor.match(/^([ \t]*)(else|elif|except|finally)\b(.*)$/);
+    if (!m) return;
+
+    const lineIndex = value_lineIndex(info.lineStart);
+    const parentIndent = findMatchingParentIndent(m[2], lineIndex);
+    if (parentIndent === null) return;
+
+    e.preventDefault();
+    edit(info.lineStart, codeEditor.selectionEnd,
+         parentIndent + beforeCursor.substring(m[1].length) + ":");
+});
+function value_lineIndex(lineStart) {
+    return codeEditor.value.substring(0, lineStart).split("\n").length - 1;
+}
+
+/* Ctrl+/ : toggle comments */
+codeEditor.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || (e.key !== "/" && e.key !== "Divide")) return;
+    e.preventDefault();
+
+    const s = codeEditor.selectionStart;
+    const en = codeEditor.selectionEnd;
+    const value = codeEditor.value;
+    const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+    const block = value.substring(lineStart, en);
+    const allCommented = block.split("\n").every(l => /^\s*#/.test(l) || l.trim() === "");
+    const updated = allCommented
+        ? block.replace(/^(\s*)# ?/gm, "$1")
+        : block.replace(/^(\s*)/gm, "$1# ");
+
+    if (s === en) {
+        const cursor = Math.max(lineStart, s + (updated.length - block.length));
+        edit(lineStart, en, updated, cursor, cursor);
+    } else {
+        edit(lineStart, en, updated, lineStart, lineStart + updated.length);
+    }
+});
+
+/* Ctrl+D : duplicate line */
+codeEditor.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || (e.key !== "d" && e.key !== "D")) return;
+    e.preventDefault();
+    const info = getCurrentLineInfo();
+    edit(info.lineEnd, info.lineEnd, "\n" + info.value.substring(info.lineStart, info.lineEnd));
+});
+
+/* Smart Home */
+codeEditor.addEventListener("keydown", (e) => {
+    if (e.key !== "Home" || e.shiftKey) return;
+    const info = getCurrentLineInfo();
+    const target = info.lineStart + info.line.match(/^[ \t]*/)[0].length;
+    const cursor = codeEditor.selectionStart;
+    if (cursor !== target && cursor !== info.lineStart) {
+        e.preventDefault();
+        codeEditor.setSelectionRange(target, target);
+        refreshCursor();
+    }
+});
+
+/* Ctrl+Enter : run */
+codeEditor.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        runCode();
+    }
+});
+
+/* File + editing shortcuts */
+window.addEventListener("keydown", (e) => {
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+
+    if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        openSearch();
+        return;
+    }
+
+    if (e.key === "s" || e.key === "S") {
+        e.preventDefault();
+        if (e.shiftKey) saveAsFile();
+        else saveCurrentFile();
+        return;
+    }
+
+    if (e.key === "o" || e.key === "O") {
+        e.preventDefault();
+        openFileInput.click();
+        return;
+    }
+
+    if ((e.key === "z" || e.key === "Z") && !e.shiftKey) {
+        e.preventDefault();
+        undoEdit();
+        return;
+    }
+
+    if (e.key === "y" || e.key === "Y" ||
+        ((e.key === "z" || e.key === "Z") && e.shiftKey)) {
+        e.preventDefault();
+        redoEdit();
+    }
+});
+
+/* Paste: normalise line endings, turn tabs into 4 spaces, re-indent on blank indented lines */
+codeEditor.addEventListener("paste", (e) => {
+    let text = (e.clipboardData || window.clipboardData).getData("text");
+    if (!text) return;
+    e.preventDefault();
+
+    text = text.replace(/\r\n?/g, "\n").replace(/\t/g, "    ");
+
+    const s = codeEditor.selectionStart;
+    const en = codeEditor.selectionEnd;
+    const value = codeEditor.value;
+    const lineStart = value.lastIndexOf("\n", s - 1) + 1;
+    const beforeOnLine = value.substring(lineStart, s);
+
+    let inserted = text;
+    const lines = text.split("\n");
+    if (lines.length > 1 && beforeOnLine.length > 0 && beforeOnLine.trim() === "") {
+        inserted = lines.map((l, i) => i === 0 ? l : beforeOnLine + l).join("\n");
+    }
+    edit(s, en, inserted);
+});
+
+/* =========================================================
+   FIND IN CODE (Ctrl+F)
+========================================================= */
+function updateSearchResults(selectMatch = false) {
+    const query = searchInput.value;
+    searchMatches = [];
+    searchIndex = -1;
+    if (!query) {
+        searchCount.textContent = "0/0";
+        return;
+    }
+
+    const value = codeEditor.value;
+    let from = 0;
+    const lowerValue = value.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    while (from <= value.length) {
+        const at = lowerValue.indexOf(lowerQuery, from);
+        if (at === -1) break;
+        searchMatches.push({ start: at, end: at + query.length });
+        from = at + Math.max(query.length, 1);
+    }
+
+    if (!searchMatches.length) {
+        searchCount.textContent = "0/0";
+        return;
+    }
+
+    const cursor = codeEditor.selectionStart;
+    searchIndex = searchMatches.findIndex(m => m.start >= cursor);
+    if (searchIndex < 0) searchIndex = 0;
+    if (selectMatch) selectSearchMatch(searchIndex);
+    else searchCount.textContent = `${searchIndex + 1}/${searchMatches.length}`;
+}
+
+function selectSearchMatch(index) {
+    if (!searchMatches.length) return;
+    searchIndex = (index + searchMatches.length) % searchMatches.length;
+    const match = searchMatches[searchIndex];
+    codeEditor.focus();
+    codeEditor.setSelectionRange(match.start, match.end);
+    const lh = parseFloat(getComputedStyle(codeEditor).lineHeight) || 22;
+    const line = codeEditor.value.substring(0, match.start).split("\n").length;
+    codeEditor.scrollTop = Math.max(0, (line - 1) * lh - codeEditor.clientHeight / 3);
+    syncScroll();
+    refreshCursor();
+    searchCount.textContent = `${searchIndex + 1}/${searchMatches.length}`;
+}
+
+function openSearch() {
+    editorSearch.classList.add("open");
+    searchInput.value = "";
+    updateSearchResults();
+    searchInput.focus();
+}
+function closeSearch() {
+    editorSearch.classList.remove("open");
+    searchInput.value = "";
+    searchMatches = [];
+    searchIndex = -1;
+    searchCount.textContent = "0/0";
+    if (!isCoarse) codeEditor.focus();
+}
+searchInput.addEventListener("input", () => updateSearchResults(true));
+searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        selectSearchMatch(searchIndex + (e.shiftKey ? -1 : 1));
+    } else if (e.key === "Escape") {
+        e.preventDefault();
+        closeSearch();
+    }
+});
+searchPrev.addEventListener("click", () => selectSearchMatch(searchIndex - 1));
+searchNext.addEventListener("click", () => selectSearchMatch(searchIndex + 1));
+searchClose.addEventListener("click", closeSearch);
+
+/* INPUT / SCROLL / CURSOR EVENTS */
+codeEditor.addEventListener("input", () => {
+    errorLine = null;
+    if (inputMode) syncInputRows();
+    saveCode();
+    updateHighlight();
+    renderGutter();
+    updateCursor();
+});
+
+codeEditor.addEventListener("click",  refreshCursor);
+codeEditor.addEventListener("keyup",  refreshCursor);
+codeEditor.addEventListener("select", refreshCursor);
+codeEditor.addEventListener("scroll", () => { syncScroll(); });
+
+/* OUTPUT BUTTONS */
+copyButton.addEventListener("click", () => {
+    copyText(outputConsole.innerText)
+        .then(() => flashLabel(copyButton, "Copied!"))
+        .catch(() => flashLabel(copyButton, "Failed"));
+});
+clearOutputBtn.addEventListener("click", resetOutput);
+
+/* BUTTONS */
+runButton.addEventListener("click", runCode);
+stopButton.addEventListener("click", stopRun);
+clearButton.addEventListener("click", clearCode);
+resetButton.addEventListener("click", resetCode);
+
+/* =========================================================
+   PHONE LAYOUT: Run / Stop become a round button over the editor
+========================================================= */
+const phoneQuery    = window.matchMedia("(max-width: 600px)");
+const runControls   = document.getElementById("runControls");
+const headerRight   = document.querySelector(".header-right");
+const editorSection = document.getElementById("editorSection");
+
+function placeRunControls() {
+    const target = phoneQuery.matches ? editorSection : headerRight;
+    if (runControls.parentElement !== target) target.appendChild(runControls);
+}
+if (phoneQuery.addEventListener) phoneQuery.addEventListener("change", placeRunControls);
+
+/* INIT */
+placeRunControls();
+renderFileTabs();
+loadCode();
+applyFont();
+updateLineNumbers();
+applyLayout();
+window.addEventListener("beforeunload", saveCode);
+</script>
+
+</body>
+</html>
