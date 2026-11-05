@@ -31,8 +31,6 @@ PyOlympiad-main/
 ├── requirements.txt
 ├── templates/
 │   ├── index.html
-│   ├── base.html
-│   └── editor.html
 └── README.md
 ```
 
